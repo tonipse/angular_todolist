@@ -36,8 +36,14 @@ export class PageListComponent implements OnInit {
 
   ngOnInit(): void {}
 
+  public create(event: ToDo): void {
+    event.position = this.$todos.length + 1;
+    this.$todos.push(event);
+  }
+
   public update(event: EventPing): void {
     if ('check' === event.label) {
+      console.log('check');
       if (!event.object.status) {
         this.$todosdone.splice(this.$todosdone.indexOf(event.object), 1);
         this.$todos.push(event.object);
@@ -46,5 +52,29 @@ export class PageListComponent implements OnInit {
         this.$todosdone.push(event.object);
       }
     }
+    if ('delete' === event.label) {
+      console.log('delete');
+      if (!event.object.status) {
+        this.$todosdone.splice(this.$todosdone.indexOf(event.object), 1);
+      } else {
+        this.$todos.splice(this.$todos.indexOf(event.object), 1);
+      }
+    }
+    if ('label' === event.label) {
+      if (!event.object.status) {
+        this.$todosdone.forEach((toDo: ToDo) => {
+          if (toDo.id === event.object.id) {
+            toDo.label = event.object.label;
+          }
+        });
+      } else {
+        this.$todos.forEach((toDo: ToDo) => {
+          if (toDo.id === event.object.id) {
+            toDo.label = event.object.label;
+          }
+        });
+      }
+    }
+    console.log(this.$todos);
   }
 }
