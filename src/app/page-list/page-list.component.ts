@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-
 import { ToDo } from '../_interface/todo';
-
 import { EventPing } from '../_interface/EventPing';
+import { DataService } from '../_service/data.service';
+import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-page-list',
   templateUrl: './page-list.component.html',
@@ -14,31 +14,45 @@ export class PageListComponent implements OnInit {
   public $todos: ToDo[];
   public $todosdone: ToDo[];
 
-  constructor() {
+  constructor(public _dataService: DataService) {
     this.toDoShow = true;
     this.toDoDoneShow = false;
-    this.$todos = [
-      {
-        id: 0,
-        label: 'test',
-        status: false,
-        position: 1,
-      },
-      {
-        id: 1,
-        label: 'test 2',
-        status: false,
-        position: 2,
-      },
-    ];
+    this.$todos = [];
     this.$todosdone = [];
+    this.loadData();
   }
 
   ngOnInit(): void {}
 
+  public loadData(): void {
+    this.$todos = [];
+    this.$todosdone = [];
+    this._dataService.getToDo().subscribe(
+      (data: ToDo[]) => {
+        data.forEach((toDo: ToDo) => {
+          if (toDo.status === true) {
+            this.$todosdone.push(toDo);
+          } else {
+            this.$todos.push(toDo);
+          }
+        });
+      },
+      (error) => {
+        console.log(error.message);
+      }
+    );
+  }
+
   public create(event: ToDo): void {
     event.position = this.$todos.length + 1;
-    this.$todos.push(event);
+    this._dataService.postToDo(event).subscribe(
+      (data: ToDo) => {
+        this.$todos.push(data);
+      },
+      (error) => {
+        console.log(error.message);
+      }
+    );
   }
 
   public update(event: EventPing): void {
@@ -51,17 +65,19 @@ export class PageListComponent implements OnInit {
         this.$todos.splice(this.$todos.indexOf(event.object), 1);
         this.$todosdone.push(event.object);
       }
+      event.label = '';
     }
     if ('delete' === event.label) {
       console.log('delete');
-      if (!event.object.status) {
+      if (event.object.status) {
         this.$todosdone.splice(this.$todosdone.indexOf(event.object), 1);
       } else {
         this.$todos.splice(this.$todos.indexOf(event.object), 1);
       }
+      event.label = '';
     }
     if ('label' === event.label) {
-      if (!event.object.status) {
+      if (event.object.status) {
         this.$todosdone.forEach((toDo: ToDo) => {
           if (toDo.id === event.object.id) {
             toDo.label = event.object.label;
@@ -74,7 +90,9 @@ export class PageListComponent implements OnInit {
           }
         });
       }
+      event.label = '';
     }
+
     console.log(this.$todos);
   }
 }
